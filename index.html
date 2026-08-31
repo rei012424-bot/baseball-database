@@ -1,137 +1,465 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SLUGGER ANALYTICS</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React & ReactDOM -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- Babel for JSX -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Slugger Analytics - 草野球打撃管理</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans">
-  <div id="root"></div>
+<body class="h-full bg-[#07090e] text-slate-100 font-sans antialiased selection:bg-[#00f5a0] selection:text-[#07090e]">
+    <div id="root" class="h-full"></div>
 
-  <script type="text/babel">
-    const { useState, useEffect, useMemo } = React;
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
 
-    const INITIAL_MATCHES = [
-      { id: 1, date: '2026-04-12', type: '公式戦', opponent: 'レッドスターズ', ab: 4, h: 2, b2: 1, b3: 0, hr: 1, bb: 0, sf: 0 },
-      { id: 2, date: '2026-04-19', type: '練習試合', opponent: 'フェニックス', ab: 3, h: 1, b2: 1, b3: 0, hr: 0, bb: 1, sf: 0 },
-      { id: 3, date: '2026-04-26', type: 'トーナメント', opponent: 'インフィニティ', ab: 4, h: 3, b2: 2, b3: 0, hr: 0, sf: 1 },
-      { id: 4, date: '2026-05-03', type: '公式戦', opponent: 'ブラックタイガース', ab: 3, h: 0, b2: 0, b3: 0, hr: 0, bb: 2, sf: 0 }
-    ];
+        const INITIAL_MATCHES = [
+            { id: 1, date: '2026-04-12', type: '公式戦', opponent: 'レッドスターズ', ab: 4, h: 2, b2: 1, b3: 0, hr: 1, bb: 0, sf: 0 },
+            { id: 2, date: '2026-04-19', type: '練習試合', opponent: 'フェニックス', ab: 3, h: 1, b2: 0, b3: 0, hr: 0, bb: 1, sf: 0 },
+            { id: 3, date: '2026-04-26', type: 'トーナメント', opponent: 'インフィニティ', ab: 4, h: 3, b2: 2, b3: 0, hr: 0, bb: 0, sf: 1 },
+            { id: 4, date: '2026-05-03', type: '公式戦', opponent: 'ブラックタイガース', ab: 3, h: 0, b2: 0, b3: 0, hr: 0, bb: 2, sf: 0 }
+        ];
 
-    function App() {
-      const [matches, setMatches] = useState(() => {
-        const saved = localStorage.getItem('baseball_matches_v4');
-        return saved ? JSON.parse(saved) : INITIAL_MATCHES;
-      });
-      const [filterType, setFilterType] = useState('すべて');
-      const [isModalOpen, setIsModalOpen] = useState(false);
-      const [notification, setNotification] = useState(null);
-      const [formData, setFormData] = useState({
-        date: new Date().toISOString().split('T')[0],
-        type: '公式戦',
-        opponent: '',
-        ab: 3, h: 1, b2: 0, b3: 0, hr: 0, bb: 1, sf: 0
-      });
+        function App() {
+            const [matches, setMatches] = useState(() => {
+                const saved = localStorage.getItem('baseball_matches_html_v1');
+                return saved ? JSON.parse(saved) : INITIAL_MATCHES;
+            });
+            const [filterType, setFilterType] = useState('すべて');
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [notification, setNotification] = useState(null);
 
-      useEffect(() => {
-        localStorage.setItem('baseball_matches_v4', JSON.stringify(matches));
-      }, [matches]);
+            const [formData, setFormData] = useState({
+                date: new Date().toISOString().split('T')[0],
+                type: '公式戦',
+                opponent: '',
+                ab: 3,
+                h: 1,
+                b2: 0,
+                b3: 0,
+                hr: 0,
+                bb: 0,
+                sf: 0
+            });
 
-      const showNotify = (msg) => {
-        setNotification(msg);
-        setTimeout(() => setNotification(null), 3000);
-      };
+            useEffect(() => {
+                localStorage.setItem('baseball_matches_html_v1', JSON.stringify(matches));
+            }, [matches]);
 
-      const filtered = filterType === 'すべて' ? matches : matches.filter(m => m.type === filterType);
-      
-      const stats = useMemo(() => {
-        const totalAB = filtered.reduce((acc, m) => acc + Number(m.ab), 0);
-        const totalH = filtered.reduce((acc, m) => acc + Number(m.h), 0);
-        const total2B = filtered.reduce((acc, m) => acc + Number(m.b2), 0);
-        const total3B = filtered.reduce((acc, m) => acc + Number(m.b3), 0);
-        const totalHR = filtered.reduce((acc, m) => acc + Number(m.hr), 0);
-        const totalBB = filtered.reduce((acc, m) => acc + Number(m.bb), 0);
-        const totalSF = filtered.reduce((acc, m) => acc + Number(m.sf), 0);
-        
-        const totalTB = totalH + total2B + (total3B * 2) + (totalHR * 3);
-        const avg = totalAB > 0 ? (totalH / totalAB).toFixed(3) : '.000';
-        const obpDenom = totalAB + totalBB + totalSF;
-        const obp = obpDenom > 0 ? ((totalH + totalBB) / obpDenom).toFixed(3) : '.000';
-        const slg = totalAB > 0 ? (totalTB / totalAB).toFixed(3) : '.000';
-        
-        return {
-          games: filtered.length,
-          ab: totalAB,
-          h: totalH,
-          avg: avg.replace(/^0\./, ''),
-          obp: obp.replace(/^0\./, ''),
-          ops: (Number(obp) + Number(slg)).toFixed(3).replace(/^0\./, '')
-        };
-      }, [filtered]);
+            const showNotify = (msg) => {
+                setNotification(msg);
+                setTimeout(() => setNotification(null), 3000);
+            };
 
-      return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 p-4 max-w-md mx-auto">
-          {notification && (
-            <div className="fixed top-4 right-4 bg-emerald-500 text-slate-950 px-4 py-2 rounded-xl shadow-lg font-bold z-50">
-              {notification}
-            </div>
-          )}
+            const stats = useMemo(() => {
+                const filtered = filterType === 'すべて' 
+                    ? matches 
+                    : matches.filter(m => m.type === filterType);
 
-          <header className="flex justify-between items-center mb-6">
-            <h1 className="text-xl font-black tracking-wider text-emerald-400">SLUGGER ANALYTICS</h1>
-            <button
-              onClick={() => showNotify('モーダル機能')}
-              className="bg-[#00f5a0] text-[#07090e] font-bold px-3.5 py-2 rounded-xl text-xs"
-            >
-              + 記録追加
-            </button>
-          </header>
+                const totalAB = filtered.reduce((acc, m) => acc + Number(m.ab), 0);
+                const totalH = filtered.reduce((acc, m) => acc + Number(m.h), 0);
+                const total2B = filtered.reduce((acc, m) => acc + Number(m.b2), 0);
+                const total3B = filtered.reduce((acc, m) => acc + Number(m.b3), 0);
+                const totalHR = filtered.reduce((acc, m) => acc + Number(m.hr), 0);
+                const totalBB = filtered.reduce((acc, m) => acc + Number(m.bb), 0);
+                const totalSF = filtered.reduce((acc, m) => acc + Number(m.sf), 0);
 
-          <div className="flex space-x-2 mb-6 bg-slate-900 p-1 rounded-xl">
-            {['すべて', '公式戦', '練習試合', 'トーナメント'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium ${
-                  filterType === type 
-                    ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-[#07090e] font-bold' 
-                    : 'text-slate-400'
-                }`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
+                const single = totalH - total2B - total3B - totalHR;
+                const totalTB = single + (total2B * 2) + (total3B * 3) + (totalHR * 4);
 
-          <div>
-            <h2 className="text-sm font-bold text-slate-400 mb-3">BATTING DASHBOARD</h2>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl">
-                <div className="text-xs text-slate-400 mb-1">打率 (AVG)</div>
-                <div className="text-2xl font-black text-emerald-400">.{stats.avg}</div>
-              </div>
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl">
-                <div className="text-xs text-slate-400 mb-1">出塁率 (OBP)</div>
-                <div className="text-2xl font-black text-teal-400">.{stats.obp}</div>
-              </div>
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl">
-                <div className="text-xs text-slate-400 mb-1">OPS</div>
-                <div className="text-2xl font-black text-cyan-400">.{stats.ops}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
+                const avg = totalAB > 0 ? (totalH / totalAB).toFixed(3) : '.000';
+                const obpDenom = totalAB + totalBB + totalSF;
+                const obp = obpDenom > 0 ? ((totalH + totalBB) / obpDenom).toFixed(3) : '.000';
+                const slg = totalAB > 0 ? (totalTB / totalAB).toFixed(3) : '.000';
+                const ops = (parseFloat(obp) + parseFloat(slg)).toFixed(3);
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
+                return {
+                    games: filtered.length,
+                    ab: totalAB,
+                    h: totalH,
+                    b2: total2B,
+                    b3: total3B,
+                    hr: totalHR,
+                    bb: totalBB,
+                    sf: totalSF,
+                    tb: totalTB,
+                    avg: avg.replace(/^0/, ''),
+                    obp: obp.replace(/^0/, ''),
+                    slg: slg.replace(/^0/, ''),
+                    ops: ops
+                };
+            }, [matches, filterType]);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const newMatch = {
+                    id: Date.now(),
+                    ...formData,
+                    ab: Number(formData.ab),
+                    h: Number(formData.h),
+                    b2: Number(formData.b2),
+                    b3: Number(formData.b3),
+                    hr: Number(formData.hr),
+                    bb: Number(formData.bb),
+                    sf: Number(formData.sf)
+                };
+                setMatches([newMatch, ...matches]);
+                setIsModalOpen(false);
+                showNotify('打撃データを追加しました！');
+                setFormData({
+                    date: new Date().toISOString().split('T')[0],
+                    type: '公式戦',
+                    opponent: '',
+                    ab: 3,
+                    h: 1,
+                    b2: 0,
+                    b3: 0,
+                    hr: 0,
+                    bb: 0,
+                    sf: 0
+                });
+            };
+
+            const handleDelete = (id) => {
+                if (confirm('この記録を削除しますか？')) {
+                    setMatches(matches.filter(m => m.id !== id));
+                    showNotify('記録を削除しました');
+                }
+            };
+
+            const filteredMatches = filterType === 'すべて' 
+                ? matches 
+                : matches.filter(m => m.type === filterType);
+
+            return (
+                <div className="min-h-screen bg-[#07090e] text-slate-100 pb-24">
+                    {/* トースト通知 */}
+                    {notification && (
+                        <div className="fixed top-4 inset-x-4 z-50 bg-[#131b26] border border-[#00f5a0]/40 text-[#00f5a0] px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 backdrop-blur-md">
+                            <span className="w-2 h-2 rounded-full bg-[#00f5a0] animate-ping"></span>
+                            <span className="font-medium text-xs">{notification}</span>
+                        </div>
+                    )}
+
+                    {/* ヘッダー */}
+                    <header className="border-b border-slate-800/80 bg-[#0c1017]/90 backdrop-blur-xl sticky top-0 z-40 px-4 py-3">
+                        <div className="max-w-md mx-auto flex justify-between items-center">
+                            <div>
+                                <h1 className="text-xs font-black tracking-wider uppercase bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                                    SLUGGER ANALYTICS
+                                </h1>
+                                <p className="text-[9px] text-slate-400 font-mono">BATTING DASHBOARD</p>
+                            </div>
+
+                            <button
+                                onClick={() => setIsModalOpen(true)}
+                                className="bg-[#00f5a0] hover:bg-emerald-400 text-[#07090e] font-bold px-3 py-1.5 rounded-xl flex items-center space-x-1 shadow-lg shadow-[#00f5a0]/10 text-xs active:scale-95 transition-all"
+                            >
+                                <span>＋ 記録追加</span>
+                            </button>
+                        </div>
+
+                        {/* フィルタータブ */}
+                        <div className="max-w-md mx-auto mt-2.5 flex bg-[#131b26] p-1 rounded-xl border border-slate-800 text-[11px] overflow-x-auto">
+                            {['すべて', '公式戦', '練習試合', 'トーナメント'].map((type) => (
+                                <button
+                                    key={type}
+                                    onClick={() => setFilterType(type)}
+                                    className={`flex-1 py-1 px-2.5 rounded-lg transition-all font-medium whitespace-nowrap text-center ${filterType === type ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-[#07090e] font-bold shadow' : 'text-slate-400 hover:text-white'}`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </div>
+                    </header>
+
+                    {/* メインコンテンツ */}
+                    <main className="max-w-md mx-auto p-4 space-y-4">
+                        
+                        {/* スタッツダッシュボード (3列スッキリ配置) */}
+                        <div className="grid grid-cols-3 gap-2">
+                            {/* 打率 */}
+                            <div className="bg-[#0c1017] border border-slate-800/80 rounded-2xl p-3 shadow-lg">
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">打率 (AVG)</span>
+                                <div className="text-2xl font-black text-white mt-1 font-mono tracking-tight">{stats.avg}</div>
+                                <div className="mt-1.5 text-[10px] text-slate-400 border-t border-slate-800/60 pt-1 flex justify-between">
+                                    <span>安 {stats.h}</span>
+                                    <span>打 {stats.ab}</span>
+                                </div>
+                            </div>
+
+                            {/* 出塁率 */}
+                            <div className="bg-[#0c1017] border border-slate-800/80 rounded-2xl p-3 shadow-lg">
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">出塁率 (OBP)</span>
+                                <div className="text-2xl font-black text-[#00d9f5] mt-1 font-mono tracking-tight">{stats.obp}</div>
+                                <div className="mt-1.5 text-[10px] text-slate-400 border-t border-slate-800/60 pt-1 flex justify-between">
+                                    <span>四球 {stats.bb}</span>
+                                </div>
+                            </div>
+
+                            {/* OPS */}
+                            <div className="bg-gradient-to-br from-emerald-950/40 to-[#0c1017] border border-[#00f5a0]/40 rounded-2xl p-3 shadow-lg shadow-[#00f5a0]/5">
+                                <span className="text-[9px] font-bold uppercase tracking-wider text-[#00f5a0] block">OPS (総合)</span>
+                                <div className="text-2xl font-black text-[#00f5a0] mt-1 font-mono tracking-tight">{stats.ops}</div>
+                                <div className="mt-1.5 text-[9px] text-[#00f5a0]/80 border-t border-[#00f5a0]/20 pt-1 font-medium truncate">
+                                    {parseFloat(stats.ops) >= 0.8 ? '🔥 強打者' : '📈 育成中'}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 詳細内訳ミニバッジ */}
+                        <div className="grid grid-cols-6 gap-1 text-center">
+                            <div className="bg-[#0c1017] border border-slate-800/60 p-1.5 rounded-xl">
+                                <span className="text-[8px] text-slate-400 block">試合</span>
+                                <span className="text-xs font-bold font-mono">{stats.games}</span>
+                            </div>
+                            <div className="bg-[#0c1017] border border-slate-800/60 p-1.5 rounded-xl">
+                                <span className="text-[8px] text-slate-400 block">2B</span>
+                                <span className="text-xs font-bold font-mono">{stats.b2}</span>
+                            </div>
+                            <div className="bg-[#0c1017] border border-slate-800/60 p-1.5 rounded-xl">
+                                <span className="text-[8px] text-slate-400 block">3B</span>
+                                <span className="text-xs font-bold font-mono">{stats.b3}</span>
+                            </div>
+                            <div className="bg-[#0c1017] border border-slate-800/60 p-1.5 rounded-xl">
+                                <span className="text-[8px] text-slate-400 block">HR</span>
+                                <span className="text-xs font-bold font-mono text-[#00f5a0]">{stats.hr}</span>
+                            </div>
+                            <div className="bg-[#0c1017] border border-slate-800/60 p-1.5 rounded-xl">
+                                <span className="text-[8px] text-slate-400 block">BB</span>
+                                <span className="text-xs font-bold font-mono">{stats.bb}</span>
+                            </div>
+                            <div className="bg-[#0c1017] border border-slate-800/60 p-1.5 rounded-xl">
+                                <span className="text-[8px] text-slate-400 block">SF</span>
+                                <span className="text-xs font-bold font-mono">{stats.sf}</span>
+                            </div>
+                        </div>
+
+                        {/* 試合履歴カード一覧 */}
+                        <div className="space-y-2.5 pt-2">
+                            <div className="flex justify-between items-center px-1">
+                                <h3 className="font-bold text-[11px] uppercase tracking-wider text-slate-400">Match Log</h3>
+                                <span className="text-[10px] text-slate-400 font-mono">{filteredMatches.length} 試合</span>
+                            </div>
+
+                            {filteredMatches.length === 0 ? (
+                                <div className="bg-[#0c1017] border border-slate-800/80 rounded-2xl p-6 text-center text-slate-500 text-xs">
+                                    データがありません。「＋ 記録追加」から入力してください。
+                                </div>
+                            ) : (
+                                filteredMatches.map((m) => {
+                                    const matchAvg = m.ab > 0 ? (m.h / m.ab).toFixed(3).replace(/^0/, '') : '.000';
+                                    return (
+                                        <div key={m.id} className="bg-[#0c1017] border border-slate-800/80 rounded-2xl p-3.5 shadow-md space-y-2.5">
+                                            <div className="flex justify-between items-start">
+                                                <div className="space-y-0.5">
+                                                    <div className="flex items-center space-x-1.5">
+                                                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold ${m.type === '公式戦' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : m.type === 'トーナメント' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-300'}`}>
+                                                            {m.type}
+                                                        </span>
+                                                        <span className="text-[11px] text-slate-400 font-mono">{m.date}</span>
+                                                    </div>
+                                                    <h4 className="text-sm font-bold text-white pt-0.5">{m.opponent}戦</h4>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleDelete(m.id)}
+                                                    className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all border border-slate-800/60"
+                                                    title="削除"
+                                                >
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+
+                                            {/* スタッツバッジ */}
+                                            <div className="grid grid-cols-5 gap-1 pt-1.5 border-t border-slate-800/60 text-center font-mono text-[11px]">
+                                                <div className="bg-[#131b26] p-1 rounded-lg">
+                                                    <span className="text-[8px] text-slate-400 block font-sans">打数</span>
+                                                    <span className="font-bold">{m.ab}</span>
+                                                </div>
+                                                <div className="bg-[#131b26] p-1 rounded-lg">
+                                                    <span className="text-[8px] text-slate-400 block font-sans">安打</span>
+                                                    <span className="font-bold text-[#00f5a0]">{m.h}</span>
+                                                </div>
+                                                <div className="bg-[#131b26] p-1 rounded-lg">
+                                                    <span className="text-[8px] text-slate-400 block font-sans">長打</span>
+                                                    <span className="font-bold text-[#fbbf24]">{m.b2 + m.b3 + m.hr}</span>
+                                                </div>
+                                                <div className="bg-[#131b26] p-1 rounded-lg">
+                                                    <span className="text-[8px] text-slate-400 block font-sans">四球</span>
+                                                    <span className="font-bold">{m.bb}</span>
+                                                </div>
+                                                <div className="bg-emerald-950/40 border border-[#00f5a0]/30 p-1 rounded-lg">
+                                                    <span className="text-[8px] text-[#00f5a0] block font-sans">打率</span>
+                                                    <span className="font-bold text-[#00f5a0]">{matchAvg}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </main>
+
+                    {/* 記録追加モーダル */}
+                    {isModalOpen && (
+                        <div className="fixed inset-0 z-50 bg-[#07090e]/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
+                            <div className="bg-[#0c1017] border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl p-5 space-y-3.5">
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                                    <h3 className="text-xs font-bold text-white uppercase tracking-wider">打撃データの記録</h3>
+                                    <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white p-1">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+                                    <div className="grid grid-cols-2 gap-2.5">
+                                        <div>
+                                            <label className="block text-[9px] font-semibold text-slate-400 mb-1 uppercase">試合日</label>
+                                            <input
+                                                type="date"
+                                                value={formData.date}
+                                                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                                                className="w-full bg-[#131b26] border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00f5a0]"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-semibold text-slate-400 mb-1 uppercase">試合種別</label>
+                                            <select
+                                                value={formData.type}
+                                                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                                                className="w-full bg-[#131b26] border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00f5a0]"
+                                            >
+                                                <option value="公式戦">公式戦</option>
+                                                <option value="練習試合">練習試合</option>
+                                                <option value="トーナメント">トーナメント</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-[9px] font-semibold text-slate-400 mb-1 uppercase">対戦相手</label>
+                                        <input
+                                            type="text"
+                                            placeholder="例: レッドスターズ"
+                                            value={formData.opponent}
+                                            onChange={(e) => setFormData({...formData, opponent: e.target.value})}
+                                            className="w-full bg-[#131b26] border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00f5a0]"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-4 gap-2">
+                                        <div>
+                                            <label className="block text-[9px] font-semibold text-slate-400 mb-1 uppercase">打数(AB)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={formData.ab}
+                                                onChange={(e) => setFormData({...formData, ab: e.target.value})}
+                                                className="w-full bg-[#131b26] border border-slate-800 rounded-xl p-2 text-white font-mono text-center focus:outline-none focus:border-[#00f5a0]"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-semibold text-slate-400 mb-1 uppercase">安打(H)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={formData.h}
+                                                onChange={(e) => setFormData({...formData, h: e.target.value})}
+                                                className="w-full bg-[#131b26] border border-slate-800 rounded-xl p-2 text-white font-mono text-center focus:outline-none focus:border-[#00f5a0]"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-semibold text-slate-400 mb-1 uppercase">二塁打</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={formData.b2}
+                                                onChange={(e) => setFormData({...formData, b2: e.target.value})}
+                                                className="w-full bg-[#131b26] border border-slate-800 rounded-xl p-2 text-white font-mono text-center focus:outline-none focus:border-[#00f5a0]"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-semibold text-slate-400 mb-1 uppercase">三塁打</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={formData.b3}
+                                                onChange={(e) => setFormData({...formData, b3: e.target.value})}
+                                                className="w-full bg-[#131b26] border border-slate-800 rounded-xl p-2 text-white font-mono text-center focus:outline-none focus:border-[#00f5a0]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div>
+                                            <label className="block text-[9px] font-semibold text-slate-400 mb-1 uppercase">本塁打(HR)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={formData.hr}
+                                                onChange={(e) => setFormData({...formData, hr: e.target.value})}
+                                                className="w-full bg-[#131b26] border border-slate-800 rounded-xl p-2 text-white font-mono text-center focus:outline-none focus:border-[#00f5a0]"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[9px] font-semibold text-slate-400 mb-1 uppercase">四死球(BB)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={formData.bb}
+                                                onChange={(e) => setFormData({...formData, bb: e.target.value})}
+                                                className="w-full bg-[#131b26] border border-slate-800 rounded-xl p-2 text-white font-mono text-center focus:outline-none focus:border-[#00f5a0]"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase">犠飛(SF)</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={formData.sf}
+                                                onChange={(e) => setFormData({...formData, sf: e.target.value})}
+                                                className="w-full bg-[#131b26] border border-slate-800 rounded-xl p-2 text-white font-mono text-center focus:outline-none focus:border-[#00f5a0]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-2 flex justify-end space-x-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsModalOpen5(false) || setIsModalOpen(false)}
+                                            className="px-3.5 py-2 rounded-xl text-slate-400 hover:text-white"
+                                        >
+                                            キャンセル
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="px-5 py-2 bg-[#00f5a0] hover:bg-emerald-400 text-[#07090e] font-bold rounded-xl shadow-lg shadow-[#00f5a0]/20"
+                                        >
+                                            保存する
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
 </body>
 </html>
