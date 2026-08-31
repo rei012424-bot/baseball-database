@@ -27,28 +27,29 @@
 
         function App() {
             const [matches, setMatches] = useState(() => {
-                const saved = localStorage.getItem('baseball_matches_html_v3');
+                const saved = localStorage.getItem('baseball_matches_html_v4');
                 return saved ? JSON.parse(saved) : INITIAL_MATCHES;
             });
             const [filterType, setFilterType] = useState('すべて');
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [notification, setNotification] = useState(null);
 
+            // 数値入力を空文字許容にするため、初期値を文字列や空で管理
             const [formData, setFormData] = useState({
                 date: new Date().toISOString().split('T')[0],
                 type: '公式戦',
                 opponent: '',
-                ab: 3,
-                h: 1,
-                b2: 0,
-                b3: 0,
-                hr: 0,
-                bb: 0,
-                sf: 0
+                ab: '3',
+                h: '1',
+                b2: '0',
+                b3: '0',
+                hr: '0',
+                bb: '0',
+                sf: '0'
             });
 
             useEffect(() => {
-                localStorage.setItem('baseball_matches_html_v3', JSON.stringify(matches));
+                localStorage.setItem('baseball_matches_html_v4', JSON.stringify(matches));
             }, [matches]);
 
             const showNotify = (msg) => {
@@ -61,13 +62,13 @@
                     ? matches 
                     : matches.filter(m => m.type === filterType);
 
-                const totalAB = filtered.reduce((acc, m) => acc + Number(m.ab), 0);
-                const totalH = filtered.reduce((acc, m) => acc + Number(m.h), 0);
-                const total2B = filtered.reduce((acc, m) => acc + Number(m.b2), 0);
-                const total3B = filtered.reduce((acc, m) => acc + Number(m.b3), 0);
-                const totalHR = filtered.reduce((acc, m) => acc + Number(m.hr), 0);
-                const totalBB = filtered.reduce((acc, m) => acc + Number(m.bb), 0);
-                const totalSF = filtered.reduce((acc, m) => acc + Number(m.sf), 0);
+                const totalAB = filtered.reduce((acc, m) => acc + Number(m.ab || 0), 0);
+                const totalH = filtered.reduce((acc, m) => acc + Number(m.h || 0), 0);
+                const total2B = filtered.reduce((acc, m) => acc + Number(m.b2 || 0), 0);
+                const total3B = filtered.reduce((acc, m) => acc + Number(m.b3 || 0), 0);
+                const totalHR = filtered.reduce((acc, m) => acc + Number(m.hr || 0), 0);
+                const totalBB = filtered.reduce((acc, m) => acc + Number(m.bb || 0), 0);
+                const totalSF = filtered.reduce((acc, m) => acc + Number(m.sf || 0), 0);
 
                 const single = totalH - total2B - total3B - totalHR;
                 const totalTB = single + (total2B * 2) + (total3B * 3) + (totalHR * 4);
@@ -99,14 +100,16 @@
                 e.preventDefault();
                 const newMatch = {
                     id: Date.now(),
-                    ...formData,
-                    ab: Number(formData.ab),
-                    h: Number(formData.h),
-                    b2: Number(formData.b2),
-                    b3: Number(formData.b3),
-                    hr: Number(formData.hr),
-                    bb: Number(formData.bb),
-                    sf: Number(formData.sf)
+                    date: formData.date,
+                    type: formData.type,
+                    opponent: formData.opponent,
+                    ab: Number(formData.ab === '' ? 0 : formData.ab),
+                    h: Number(formData.h === '' ? 0 : formData.h),
+                    b2: Number(formData.b2 === '' ? 0 : formData.b2),
+                    b3: Number(formData.b3 === '' ? 0 : formData.b3),
+                    hr: Number(formData.hr === '' ? 0 : formData.hr),
+                    bb: Number(formData.bb === '' ? 0 : formData.bb),
+                    sf: Number(formData.sf === '' ? 0 : formData.sf)
                 };
                 setMatches([newMatch, ...matches]);
                 setIsModalOpen(false);
@@ -115,13 +118,13 @@
                     date: new Date().toISOString().split('T')[0],
                     type: '公式戦',
                     opponent: '',
-                    ab: 3,
-                    h: 1,
-                    b2: 0,
-                    b3: 0,
-                    hr: 0,
-                    bb: 0,
-                    sf: 0
+                    ab: '3',
+                    h: '1',
+                    b2: '0',
+                    b3: '0',
+                    hr: '0',
+                    bb: '0',
+                    sf: '0'
                 });
             };
 
@@ -286,7 +289,7 @@
                                                 </div>
                                                 <div className="bg-[#131b26] p-1 rounded-lg">
                                                     <span className="text-[8px] text-slate-400 block font-sans">長打</span>
-                                                    <span className="font-bold text-[#fbbf24]">{m.b2 + m.b3 + m.hr}</span>
+                                                    <span className="font-bold text-[#fbbf24]">{Number(m.b2||0) + Number(m.b3||0) + Number(m.hr||0)}</span>
                                                 </div>
                                                 <div className="bg-[#131b26] p-1 rounded-lg">
                                                     <span className="text-[8px] text-slate-400 block font-sans">四球</span>
@@ -318,7 +321,6 @@
                                 </div>
 
                                 <form onSubmit={handleSubmit} className="space-y-3 text-xs">
-                                    {/* 試合日と試合種別を完全な縦並びにして幅を100%確保 */}
                                     <div className="space-y-3">
                                         <div>
                                             <label className="block text-[9px] font-semibold text-slate-400 mb-1 uppercase">試合日</label>
@@ -435,7 +437,7 @@
                                                 type="number"
                                                 min="0"
                                                 value={formData.sf}
-                                                onChange={(e) => setformData({...formData, sf: e.target.value})}
+                                                onChange={(e) => setFormData({...formData, sf: e.target.value})}
                                                 className="w-full bg-[#131b26] border border-slate-800 rounded-xl p-2 text-white font-mono text-center focus:outline-none focus:border-[#00f5a0]"
                                             />
                                         </div>
